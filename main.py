@@ -111,48 +111,54 @@ class Chess:
             if col_p != 7:
                 if self.position[col_p+1][row_p+1].isupper():
                     possible.append((col_p+1, row_p+1))
-        elif figure in ('k', 'k'):
+        elif figure in ('k', 'K'):
             moves = [[2, 1], [1, 2], [-2, 1], [-2, -1], [2, -1], [-1, -2], [-1, 2], [1, -2]]
-            for move in moves:
-                if 0 <= (col_p+move[0]) < 8 and 0 <= row_p+move[1] < 8:
-                    dest = (col_p+move[0], row_p+move[1])
-                    if self.position[dest[0]][dest[1]] == '-':
-                        possible.append(dest)
-                    else:
-                        if self.position[dest[0]][dest[1]].islower() != figure.islower():
-                            possible.append(dest)
+            possible = self.check_moves(moves, figure, col_p, row_p, True)
         elif figure in ('b', 'B'):
             moves = [[1, 1], [-1, 1], [1, -1], [-1, -1]]
-            for move in moves:
-                x, y = col_p, row_p
-                cont = False
-                while True:
-                    x += move[0]
-                    y += move[1]
-                    dest = (x, y)
-                    if 0 <= x < 8 and 0 <= y < 8:
-                        if self.position[dest[0]][dest[1]] == '-':
-                            possible.append(dest)
-                        else:
-                            if self.position[x][y].islower() != figure.islower():
-                                possible.append(dest)
-                                cont = True
-                                break
-                            else:
-                                cont = True
-                                break
-                    else:
-                        cont = True
-                        break
-                if cont:
-                    continue
+            possible = self.check_moves(moves, figure, col_p, row_p)
+        elif figure in ('r', 'R'):
+            moves = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+            possible = self.check_moves(moves, figure, col_p, row_p)
+        elif figure in ('q', 'Q'):
+            moves = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]
+            possible = self.check_moves(moves, figure, col_p, row_p)
+        elif figure in ('ki', 'KI'):
+            moves = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]
+            possible = self.check_moves(moves, figure, col_p, row_p, True)
         else:
             for i in range(8):
                 for j in range(8):
                     possible.append((i, j))
-        print("***")
-        print(pos)
-        print(possible)
+        return possible
+
+    def check_moves(self, moves, figure, col_p, row_p, brk=False):
+        possible = []
+        for move in moves:
+            x, y = col_p, row_p
+            cont = False
+            while True:
+                x += move[0]
+                y += move[1]
+                dest = (x, y)
+                if 0 <= x < 8 and 0 <= y < 8:
+                    if self.position[dest[0]][dest[1]] == '-':
+                        possible.append(dest)
+                    else:
+                        if self.position[x][y].islower() != figure.islower():
+                            possible.append(dest)
+                            cont = True
+                            break
+                        else:
+                            cont = True
+                            break
+                else:
+                    cont = True
+                    break
+                if brk:
+                    break
+            if cont:
+                continue
         return possible
                 
     def move(self, current, dest, figure):
@@ -179,17 +185,15 @@ class Chess:
                         self.board[1],
                         (i*size_sqr, j*size_sqr, size_sqr, size_sqr))
 
+        s = pygame.Surface((size_sqr, size_sqr))
+        s.fill((80, 200, 120))
         if highlight:
-            pygame.draw.rect(
-                self.win,
-                "olive",
-                (highlight[0]*size_sqr, highlight[1]*size_sqr, size_sqr, size_sqr))
+            s.set_alpha(100)
+            self.win.blit(s, (highlight[0]*size_sqr, highlight[1]*size_sqr))
         
         for move in available:
-            pygame.draw.rect(
-                self.win,
-                "maroon",
-                (move[0]*size_sqr, move[1]*size_sqr, size_sqr, size_sqr))
+            s.set_alpha(50)  
+            self.win.blit(s, (move[0]*size_sqr, move[1]*size_sqr))
 
         for i in range(8):
             for j in range(8):
