@@ -143,15 +143,13 @@ class Chess:
                 dest = (x, y)
                 if 0 <= x < 8 and 0 <= y < 8:
                     if self.position[dest[0]][dest[1]] == '-':
+                        # checkmate check
                         possible.append(dest)
                     else:
+                        cont = True
                         if self.position[x][y].islower() != figure.islower():
                             possible.append(dest)
-                            cont = True
-                            break
-                        else:
-                            cont = True
-                            break
+                        break
                 else:
                     cont = True
                     break
