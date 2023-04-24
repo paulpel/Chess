@@ -134,6 +134,11 @@ class Chess:
         return True
 
     def all_possible_moves(self):
+        """Generate all possible moves (no check condition! castles not included)
+
+        :return: generated moves
+        :rtype: list
+        """
         all_moves = []
 
         starting_pieces = []
@@ -168,6 +173,17 @@ class Chess:
         return all_moves
 
     def generate_pawn_moves(self, row, col, fig):
+        """Generate pawn moves
+
+        :param row: row of figure to generate moves for
+        :type row: int
+        :param col: column of figure to generate moves for
+        :type col: int
+        :param fig: figure to be moved ('p' or 'P')
+        :type fig: string
+        :return: all possible pawn moves
+        :rtype: list
+        """
         moves = []
         direction = 1 if self.player == "w" and fig.isupper() else -1
         start_rank = 1 if self.player == "w" and fig.isupper() else 6
@@ -231,6 +247,17 @@ class Chess:
         return moves
 
     def generate_rook_moves(self, row, col, fig):
+        """Generate rook moves
+
+        :param row: row of figure to generate moves for
+        :type row: int
+        :param col: column of figure to generate moves for
+        :type col: int
+        :param fig: figure to be moved (ex. 'r' or 'R')
+        :type fig: string
+        :return: all possible rook moves (castles not included)
+        :rtype: list
+        """
         moves = []
 
         # Define directions for the rook moves: up, down, left, and right
@@ -264,6 +291,17 @@ class Chess:
         return moves
 
     def generate_knight_moves(self, row, col, fig):
+        """Generate knight moves
+
+        :param row: row of figure to generate moves for
+        :type row: int
+        :param col: column of figure to generate moves for
+        :type col: int
+        :param fig: figure to be moved (ex. 'n' or 'N')
+        :type fig: string
+        :return: all possible knight moves
+        :rtype: list
+        """
         moves = []
 
         # Define possible knight moves: combinations of two squares in one direction and one square in the other direction
@@ -294,6 +332,17 @@ class Chess:
         return moves
 
     def generate_bishop_moves(self, row, col, fig):
+        """Generate bishop moves
+
+        :param row: row of figure to generate moves for
+        :type row: int
+        :param col: column of figure to generate moves for
+        :type col: int
+        :param fig: figure to be moved (ex. 'b' or 'B')
+        :type fig: string
+        :return: all possible bishop moves
+        :rtype: list
+        """
         moves = []
 
         # Define directions for the bishop moves: diagonally up-left, up-right, down-left, and down-right
@@ -327,6 +376,17 @@ class Chess:
         return moves
 
     def generate_queen_moves(self, row, col, fig):
+        """Generate queen moves
+
+        :param row: row of figure to generate moves for
+        :type row: int
+        :param col: column of figure to generate moves for
+        :type col: int
+        :param fig: figure to be moved (ex. 'q' or 'Q')
+        :type fig: string
+        :return: all possible queen moves
+        :rtype: list
+        """
         moves = []
 
         # Define directions for the queen moves: horizontally, vertically, and diagonally
@@ -369,6 +429,17 @@ class Chess:
         return moves
 
     def generate_king_moves(self, row, col, fig):
+        """Generate king moves
+
+        :param row: row of figure to generate moves for
+        :type row: int
+        :param col: column of figure to generate moves for
+        :type col: int
+        :param fig: figure to be moved (ex. 'k' or 'K')
+        :type fig: string
+        :return: all possible king moves
+        :rtype: list
+        """
         moves = []
 
         # Define possible king moves: horizontally, vertically, and diagonally (one square)
@@ -399,14 +470,27 @@ class Chess:
         return moves
 
     def filter_illegal_moves(self, moves):
+        """Filter moves to exlude illegal ones
+
+        :param moves: list of moves (list of tuples)
+        :type moves: moves
+        """
         filtered = []
         for move in moves:
             temp = copy.deepcopy(self.board)
             temp[move[2]][move[3]] = temp[move[0]][move[1]]
             temp[move[0]][move[1]] = "."
             self.print_board(temp)
+            self.is_king_attacked(temp)
 
     def is_king_attacked(self, board):
+        """Check if king is being attacked
+
+        :param board: potential board state
+        :type board: list
+        """
+        # pawn
+
         # generate all capture virtual moves as king was a different piece, store move and piece type
         pass
 
