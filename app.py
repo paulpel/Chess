@@ -1,4 +1,5 @@
 import copy
+import random
 
 
 class Chess:
@@ -42,7 +43,7 @@ class Chess:
             "N": "\u2658",
             "B": "\u2657",
             "Q": "\u2655",
-            "K": "\u2658",
+            "K": "\u2654",
         }
         ids = ["X"] + [str(i) for i in range(8)]
         ids_row = " ".join(ids)
@@ -66,11 +67,20 @@ class Chess:
             self.print_board(self.board)
             possible = self.all_possible_moves()
             filtered_moves = self.filter_illegal_moves(possible)
+            print(len(possible))
             print(len(filtered_moves))
+            # append with castle moves if possible
             # move = self.get_move()
-            # print(move)
-            # update turn
-            break
+            # logic with player movement
+
+            # random moves
+            random_move = random.choice(filtered_moves)
+            # check if upgrade available
+            self.move(random_move)
+            temp_____ = input("temp...") 
+            if len(filtered_moves) == 0:
+                print("Game over")
+                self.close = True
 
     def get_move(self):
         """Get move from user
@@ -96,6 +106,14 @@ class Chess:
             col_end,
             self.board[row_start][col_start],
         )
+
+    def move(self, move):
+        from_row, to_row = move[0], move[2]
+        from_col, to_col = move[1], move[3]
+        fig = self.board[from_row][from_col]
+        self.board[to_row][to_col] = fig
+        self.board[from_row][from_col] = "."
+        self.white_turn = not self.white_turn # update turn
 
     def check_input(self, inp, start=True):
         """Check if provided input is valid
@@ -515,7 +533,7 @@ class Chess:
             direction = 1 if self.player == "w" and fig.isupper() else -1
             for dy in (-1, 1):
                 if 0 <= col_king + dy < 8 and 0 <= row_king + direction < 8:
-                    if board[row + direction][col_king + dy].lower() == 'p' and board[row + direction][col_king + dy].islower() != fig.islower():
+                    if board[row_king + direction][col_king + dy].lower() == 'p' and board[row_king + direction][col_king + dy].islower() != fig.islower():
                         return True
         if 'r' in remaining_enemy_type:
             directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
