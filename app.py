@@ -5,10 +5,10 @@ class Chess:
     def __init__(self, player="w") -> None:
         self.board = [
             ["r", "n", "b", "q", "k", "b", "n", "r"],
-            ["p", "p", "p", ".", "p", "p", "p", "p"],
+            ["p", "p", "p", "p", "p", "p", "p", "p"],
             [".", ".", ".", ".", ".", ".", ".", "."],
             [".", ".", ".", ".", ".", ".", ".", "."],
-            ["B", ".", ".", ".", ".", ".", ".", "."],
+            [".", ".", ".", ".", ".", ".", ".", "."],
             [".", ".", ".", ".", ".", ".", ".", "."],
             ["P", "P", "P", "P", "P", "P", "P", "P"],
             ["R", "N", "B", "Q", "K", "B", "N", "R"],
@@ -497,6 +497,10 @@ class Chess:
 
         :param board: potential board state
         :type board: list
+        :param fig: figure which was moved
+        :type fig: string
+        :return: if the king is being attacked
+        :rtype: bool
         """
         remaining_enemy_type = set()
         for row in range(len(board)):
@@ -527,14 +531,14 @@ class Chess:
                     new_col += dc
         if 'n' in remaining_enemy_type:
             knight_moves = [
-            (2, 1),
-            (1, 2),
-            (-1, 2),
-            (-2, 1),
-            (-2, -1),
-            (-1, -2),
-            (1, -2),
-            (2, -1),
+                (2, 1),
+                (1, 2),
+                (-1, 2),
+                (-2, 1),
+                (-2, -1),
+                (-1, -2),
+                (1, -2),
+                (2, -1),
             ]
             for dr, dc in knight_moves:
                 new_row, new_col = row_king + dr, col_king + dc
@@ -554,6 +558,45 @@ class Chess:
                         return True
                     new_row += dr
                     new_col += dc
+        if 'q' in remaining_enemy_type:
+            directions = [
+                (-1, 0),
+                (1, 0),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (-1, 1),
+                (1, -1),
+                (1, 1),
+            ]
+            for dr, dc in directions:
+                new_row, new_col = row_king + dr, col_king + dc
+                while 0 <= new_row < 8 and 0 <= new_col < 8:
+                    target_piece = board[new_row][new_col]
+                    if target_piece.islower() == fig.islower():
+                        break
+                    elif target_piece.lower() == 'q':
+                        return True
+                    new_row += dr
+                    new_col += dc
+        if 'k' in remaining_enemy_type:
+            king_moves = [
+                (-1, 0),
+                (1, 0),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (-1, 1),
+                (1, -1),
+                (1, 1),
+            ]
+            for dr, dc in king_moves:
+                new_row, new_col = row_king + dr, col_king + dc
+                if 0 <= new_row < 8 and 0 <= new_col < 8:
+                    target_piece = board[new_row][new_col]
+                    if target_piece.islower() != fig.islower() and target_piece.lower() == 'k':
+                        return True
+
         return False
         # generate all capture virtual moves as king was a different piece, store move and piece type
 
