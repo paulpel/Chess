@@ -1,3 +1,6 @@
+import copy
+
+
 class Chess:
     def __init__(self, player="w") -> None:
         self.board = [
@@ -25,7 +28,7 @@ class Chess:
 
         self.close = False
 
-    def print_board(self):
+    def print_board(self, board):
         """Function to print current board state"""
         ascii_figures = {
             "p": "\u265F",  # white
@@ -41,7 +44,7 @@ class Chess:
             "Q": "\u2655",
             "K": "\u2658",
         }
-        for row in self.board:
+        for row in board:
             row_str = " ".join(
                 [
                     ascii_figures[row[i]] if row[i] != "." else row[i]
@@ -54,8 +57,9 @@ class Chess:
         """Main logic"""
 
         while not self.close:
-            self.print_board()
+            self.print_board(self.board)
             possible = self.all_possible_moves()
+            filtered_moves = self.filter_illegal_moves(possible)
             # move = self.get_move()
             # print(move)
             # update turn
@@ -161,9 +165,7 @@ class Chess:
             if piece[2].lower() == "k":
                 all_moves.extend(self.generate_king_moves(piece[0], piece[1], piece[2]))
 
-        print(len(all_moves))
-        for move in all_moves:
-            print(move)
+        return all_moves
 
     def generate_pawn_moves(self, row, col, fig):
         moves = []
@@ -396,6 +398,17 @@ class Chess:
 
         return moves
 
+    def filter_illegal_moves(self, moves):
+        filtered = []
+        for move in moves:
+            temp = copy.deepcopy(self.board)
+            temp[move[2]][move[3]] = temp[move[0]][move[1]]
+            temp[move[0]][move[1]] = '.'
+            self.print_board(temp)
+
+    def is_king_attacked(self, board):
+        # generate all capture virtual moves as king was a different piece, store move and piece type
+        pass
 
 if __name__ == "__main__":
     chess_obj = Chess()
