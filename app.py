@@ -107,7 +107,7 @@ class Chess:
 
         row, col = int(inp[0]), int(inp[1])
 
-        if row not in acceptable or y not in acceptable:
+        if row not in acceptable or col not in acceptable:
             print("Wrong input! Indexes must be in range 0-7. (ex. '73')")
             return False
 
@@ -403,12 +403,13 @@ class Chess:
         for move in moves:
             temp = copy.deepcopy(self.board)
             temp[move[2]][move[3]] = temp[move[0]][move[1]]
-            temp[move[0]][move[1]] = '.'
+            temp[move[0]][move[1]] = "."
             self.print_board(temp)
 
     def is_king_attacked(self, board):
         # generate all capture virtual moves as king was a different piece, store move and piece type
         pass
+
 
 if __name__ == "__main__":
     chess_obj = Chess()
