@@ -5,7 +5,7 @@ import random
 class Chess:
     def __init__(self, player="w") -> None:
         self.board = [
-            ["r", "n", "b", "w", "k", "b", "n", "r"],
+            ["r", "n", "b", "q", "k", "b", "n", "r"],
             ["p", "p", "p", "p", "p", "p", "p", "p"],
             [".", ".", ".", ".", ".", ".", ".", "."],
             [".", ".", ".", ".", ".", ".", ".", "."],
@@ -81,6 +81,7 @@ class Chess:
                 else:
                     self.move(random_move)
                 self.update_castle()
+                input()
                 print(filtered_moves)
                 print(random_move)
                 self.print_board(self.board)
