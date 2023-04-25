@@ -64,7 +64,6 @@ class Chess:
         """Main logic"""
         self.print_board(self.board)
         while not self.close:
-            print("white to move:", self.white_turn)
             possible = self.all_possible_moves()
             filtered_moves = self.filter_illegal_moves(possible)
             filtered_moves.extend(self.generate_castle_moves())
@@ -79,11 +78,16 @@ class Chess:
                     for move in random_move:
                         self.move(move)
                 else:
-                    self.move(random_move)
+                    if isinstance(random_move[-1], str):
+                        self.move(random_move, random_move[-1])
+                    else:
+                        self.move(random_move)
                 self.update_castle()
                 input()
-                print(filtered_moves)
-                print(random_move)
+                print("Possible moves(from_row, from_col, to_row, to_col):")
+                print('\n'.join([str(item) for item in filtered_moves]))
+                print("Random move choosen:", random_move)
+                print("\nWhite turn!" if self.white_turn else "\nBlack turn!")
                 self.print_board(self.board)
             else:
                 print("Game over")
@@ -114,10 +118,12 @@ class Chess:
             self.board[row_start][col_start],
         )
 
-    def move(self, move):
+    def move(self, move, upgrade=False):
         from_row, to_row = move[0], move[2]
         from_col, to_col = move[1], move[3]
         fig = self.board[from_row][from_col]
+        if upgrade:
+            fig = upgrade
         self.board[to_row][to_col] = fig
         self.board[from_row][from_col] = "."
         self.white_turn = not self.white_turn  # update turn
