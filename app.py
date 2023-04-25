@@ -5,7 +5,7 @@ import random
 class Chess:
     def __init__(self, player="w") -> None:
         self.board = [
-            ["r", "n", "b", "q", "k", "b", "n", "r"],
+            ["r", ".", ".", ".", "k", "b", "n", "r"],
             ["p", "p", "p", "p", "p", "p", "p", "p"],
             [".", ".", ".", ".", ".", ".", ".", "."],
             [".", ".", ".", ".", ".", ".", ".", "."],
@@ -67,8 +67,7 @@ class Chess:
             self.print_board(self.board)
             possible = self.all_possible_moves()
             filtered_moves = self.filter_illegal_moves(possible)
-            print(len(possible))
-            print(len(filtered_moves))
+            filtered_moves.extend(self.generate_castle_moves())
             # append with castle moves if possible
             # move = self.get_move()
             # logic with player movement
@@ -77,7 +76,7 @@ class Chess:
             random_move = random.choice(filtered_moves)
             # check if upgrade available
             self.move(random_move)
-            temp_____ = input("temp...") 
+            temp_____ = input("...")
             if len(filtered_moves) == 0:
                 print("Game over")
                 self.close = True
@@ -113,7 +112,7 @@ class Chess:
         fig = self.board[from_row][from_col]
         self.board[to_row][to_col] = fig
         self.board[from_row][from_col] = "."
-        self.white_turn = not self.white_turn # update turn
+        self.white_turn = not self.white_turn  # update turn
 
     def check_input(self, inp, start=True):
         """Check if provided input is valid
@@ -617,6 +616,23 @@ class Chess:
 
         return False
         # generate all capture virtual moves as king was a different piece, store move and piece type
+
+    def generate_castle_moves(self):
+        if (self.player == "w" and self.white_turn) or (self.player == 'b' and not self.white_turn):
+            # check bottom 
+            fig = self.board[7][4]
+            tiles_between = [self.board[i][j] for i, j in [(7, 1), (7, 2), (7, 3)]]
+            valid_bl = True
+            if len(set(tiles_between)) == 1 and tiles_between[0] == '.':
+                for row, col in [(7, 1), (7, 2), (7, 3)]:
+                    temp_b = copy.deepcopy(self.board)
+                    temp_b[7][4] = '.'
+                    temp_b[row][col] = fig
+                    self.print_board(temp_b)
+                    if self.is_king_attacked(temp_b, fig):
+                        valid_bl = False
+
+        return []
 
 
 if __name__ == "__main__":
