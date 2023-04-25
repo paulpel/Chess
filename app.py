@@ -24,8 +24,8 @@ class Chess:
         self.white_turn = True
         self.game_history = []
         self.last_move = None  # (from_x, from_y, to_x, to_y , figure)
-        self.black_castle = (True, True)  # (queen_side, king_side)
-        self.white_castle = (True, True)
+        self.black_castle = [True, True]  # (queen_side, king_side)
+        self.white_castle = [True, True]
 
         self.close = False
 
@@ -62,22 +62,29 @@ class Chess:
 
     def main(self):
         """Main logic"""
-
+        self.print_board(self.board)
         while not self.close:
-            self.print_board(self.board)
+            print("white to move:", self.white_turn)
             possible = self.all_possible_moves()
             filtered_moves = self.filter_illegal_moves(possible)
             filtered_moves.extend(self.generate_castle_moves())
             # append with castle moves if possible
             # move = self.get_move()
             # logic with player movement
-
+            
             # random moves
-            random_move = random.choice(filtered_moves)
-            # check if upgrade available
-            self.move(random_move)
-            temp_____ = input("...")
-            if len(filtered_moves) == 0:
+            if len(filtered_moves) >= 1:
+                random_move = random.choice(filtered_moves)
+                if isinstance(random_move[0], tuple):
+                    for move in random_move:
+                        self.move(move)
+                else:
+                    self.move(random_move)
+                self.update_castle()
+                print(filtered_moves)
+                print(random_move)
+                self.print_board(self.board)
+            else:
                 print("Game over")
                 self.close = True
 
@@ -540,10 +547,11 @@ class Chess:
                 new_row, new_col = row_king + dr, col_king + dc
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
-                    if target_piece.islower() == fig.islower():
-                        break
-                    elif target_piece.lower() == 'r':
-                        return True
+                    if target_piece != '.':
+                        if target_piece.islower() == fig.islower():
+                            break
+                        elif target_piece.lower() == 'r':
+                            return True
                     new_row += dr
                     new_col += dc
         if 'n' in remaining_enemy_type:
@@ -569,10 +577,11 @@ class Chess:
                 new_row, new_col = row_king + dr, col_king + dc
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
-                    if target_piece.islower() == fig.islower():
-                        break
-                    elif target_piece.lower() == 'b':
-                        return True
+                    if target_piece != '.':
+                        if target_piece.islower() == fig.islower():
+                            break
+                        elif target_piece.lower() == 'b':
+                            return True
                     new_row += dr
                     new_col += dc
         if 'q' in remaining_enemy_type:
@@ -590,10 +599,11 @@ class Chess:
                 new_row, new_col = row_king + dr, col_king + dc
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
-                    if target_piece.islower() == fig.islower():
-                        break
-                    elif target_piece.lower() == 'q':
-                        return True
+                    if target_piece != '.':
+                        if target_piece.islower() == fig.islower():
+                            break
+                        elif target_piece.lower() == 'q':
+                            return True
                     new_row += dr
                     new_col += dc
         if 'k' in remaining_enemy_type:
@@ -615,24 +625,104 @@ class Chess:
                         return True
 
         return False
-        # generate all capture virtual moves as king was a different piece, store move and piece type
 
     def generate_castle_moves(self):
+        moves = []
         if (self.player == "w" and self.white_turn) or (self.player == 'b' and not self.white_turn):
-            # check bottom 
-            fig = self.board[7][4]
-            tiles_between = [self.board[i][j] for i, j in [(7, 1), (7, 2), (7, 3)]]
-            valid_bl = True
-            if len(set(tiles_between)) == 1 and tiles_between[0] == '.':
-                for row, col in [(7, 1), (7, 2), (7, 3)]:
-                    temp_b = copy.deepcopy(self.board)
-                    temp_b[7][4] = '.'
-                    temp_b[row][col] = fig
-                    self.print_board(temp_b)
-                    if self.is_king_attacked(temp_b, fig):
-                        valid_bl = False
 
-        return []
+            fig = self.board[7][4]
+            if fig.lower() != 'k':
+                return moves
+
+            valid_bot_left = self.check_castle([(7, 2), (7, 3)],  [(7, 2), (7, 3), (7, 4)], fig)
+            valid_bot_right = self.check_castle([(7, 5), (7, 6)],  [(7, 4), (7, 5), (7, 6)], fig)
+
+            if self.player == "w" and self.white_castle[0] and valid_bot_left and self.white_turn:
+                moves.append(((7, 4, 7, 2), (7, 0, 7, 3)))
+            if self.player == "w" and self.white_castle[1] and valid_bot_right and self.white_turn:
+                moves.append(((7, 4, 7, 6), (7, 7, 7, 5)))
+            if self.player == "b" and self.black_castle[0] and valid_bot_left and not self.white_turn:
+                moves.append(((7, 4, 7, 2), (7, 0, 7, 3)))
+            if self.player == "b" and self.black_castle[1] and valid_bot_right and not self.white_turn:
+                moves.append(((7, 4, 7, 6), (7, 7, 7, 5)))
+
+        else:
+            fig = self.board[0][4]
+            if fig.lower() != 'k':
+                return moves
+
+            valid_up_left = self.check_castle([(0, 2), (0, 3)],  [(0, 2), (0, 3), (0, 4)], fig)
+            valid_up_right = self.check_castle([(0, 5), (0, 6)],  [(0, 4), (0, 5), (0, 6)], fig)
+
+            if self.player == "w" and self.white_castle[0] and valid_up_left and not self.white_turn:
+                moves.append(((0, 4, 0, 2), (0, 0, 0, 3)))
+            if self.player == "w" and self.white_castle[1] and valid_up_right and not self.white_turn:
+                moves.append(((0, 4, 0, 6), (0, 7, 0, 5)))
+            if self.player == "b" and self.black_castle[0] and valid_up_left and self.white_turn:
+                moves.append(((0, 4, 0, 2), (0, 0, 0, 3)))
+            if self.player == "b" and self.black_castle[1] and valid_up_right and self.white_turn:
+                moves.append(((0, 4, 0, 6), (0, 7, 0, 5)))
+
+        return moves
+
+    def check_castle(self, tiles_b, tiles_to_check, fig):
+        is_valid = True
+        tiles_between = [self.board[i][j] for i, j in tiles_b]
+        if len(set(tiles_between)) == 1 and tiles_between[0] == '.':
+            for row, col in tiles_to_check:
+                temp_b = copy.deepcopy(self.board)
+                temp_b[7][4] = '.'
+                temp_b[row][col] = fig
+                if self.is_king_attacked(temp_b, fig):
+                    is_valid = False
+        else:
+            is_valid = False
+
+        return is_valid
+
+    def update_castle(self):
+        king_bot = self.board[7][4] 
+        bot_left = self.board[7][0]
+        bot_right = self.board[7][7]
+
+        king_top = self.board[0][4]
+        up_left = self.board[0][0]
+        up_right = self.board[0][7]
+
+
+        if king_bot != 'k':
+            if self.player == "w":
+                self.white_castle = [False, False]
+            else:
+                self.black_castle = [False, False]
+        else:
+            if bot_left != 'r':
+                if self.player == "w":
+                    self.white_castle[0] = False
+                else:
+                    self.black_castle[0] = False
+            if bot_right != 'r':
+                if self.player == "w":
+                    self.white_castle[1] = False
+                else:
+                    self.black_castle[1] = False
+        
+        if king_top != 'k':
+            if self.player != "w":
+                self.white_castle = [False, False]
+            else:
+                self.black_castle = [False, False]
+        else:
+            if up_left != 'r':
+                if self.player != "w":
+                    self.white_castle[0] = False
+                else:
+                    self.black_castle[0] = False
+            if up_right != 'r':
+                if self.player != "w":
+                    self.white_castle[1] = False
+                else:
+                    self.black_castle[1] = False
 
 
 if __name__ == "__main__":
