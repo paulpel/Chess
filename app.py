@@ -227,7 +227,7 @@ class Chess:
         start_rank = 1 if self.player == "w" and fig.isupper() else 6
         promotion_rank = 7 if self.player == "w" and fig.isupper() else 0
         promotion_pieces = (
-            ["Q", "R", "B", "K"] if fig.isupper() else ["q", "r", "b", "k"]
+            ["Q", "R", "B", "N"] if fig.isupper() else ["q", "r", "b", "n"]
         )
 
         # Move forward
@@ -555,10 +555,10 @@ class Chess:
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
                     if target_piece != '.':
-                        if target_piece.islower() == fig.islower():
-                            break
-                        elif target_piece.lower() == 'r':
+                        if target_piece.lower() == 'r' and target_piece.islower() != fig.islower():
                             return True
+                        else:
+                            break
                     new_row += dr
                     new_col += dc
         if 'n' in remaining_enemy_type:
@@ -585,10 +585,10 @@ class Chess:
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
                     if target_piece != '.':
-                        if target_piece.islower() == fig.islower():
-                            break
-                        elif target_piece.lower() == 'b':
+                        if target_piece.lower() == 'b' and target_piece.islower() != fig.islower():
                             return True
+                        else:
+                            break
                     new_row += dr
                     new_col += dc
         if 'q' in remaining_enemy_type:
@@ -607,10 +607,10 @@ class Chess:
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
                     if target_piece != '.':
-                        if target_piece.islower() == fig.islower():
-                            break
-                        elif target_piece.lower() == 'q':
+                        if target_piece.lower() == 'q' and target_piece.islower() != fig.islower():
                             return True
+                        else :
+                            break
                     new_row += dr
                     new_col += dc
         if 'k' in remaining_enemy_type:
