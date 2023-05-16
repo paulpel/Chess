@@ -70,7 +70,7 @@ class Chess:
             # append with castle moves if possible
             # move = self.get_move()
             # logic with player movement
-            
+
             # random moves
             if len(filtered_moves) >= 1:
                 random_move = random.choice(filtered_moves)
