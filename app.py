@@ -60,8 +60,35 @@ class Chess:
             count += 1
         print('\n')
 
+    def read_position_from_fen(self, fen_string):
+        current_row = 0
+        current_col = 0
+        i = 0
+        for letter in fen_string:
+            i+=1
+            if letter.lower() in 'rnbqkp':
+                self.board[8-current_row][8-current_col] = letter
+                current_col += 1
+            elif letter == '/':
+                current_row += 1
+                current_col = 0
+            elif letter.isdigit():
+                for j in range(int(letter)):
+                    self.board[8-current_row][8-current_col] = '.'
+                    current_col += 1
+            if current_row >= 7 and current_col >= 8:
+                break
+        side, castling, en_passant_target, _, _ = fen_string[i+1:].split()
+        print(side, castling, en_passant_target)
+        self.player = side
+        self.white_turn = side == 'w'
+        self.black_castle = ['q' in castling, 'k' in castling]
+        self.white_castle = ['Q' in castling, 'K' in castling]
     def main(self):
         """Main logic"""
+        self.print_board(self.board)
+        example_pos = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
+        self.read_position_from_fen(example_pos)
         self.print_board(self.board)
         while not self.close:
             possible = self.all_possible_moves()
@@ -555,7 +582,7 @@ class Chess:
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
                     if target_piece != '.':
-                        if target_piece.lower() == 'r' and target_piece.islower() != fig.islower():
+                        if target_piece.lower() == 'q' and target_piece.islower() != fig.islower():
                             return True
                         else:
                             break
@@ -628,7 +655,7 @@ class Chess:
                 new_row, new_col = row_king + dr, col_king + dc
                 if 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
-                    if target_piece.islower() != fig.islower() and target_piece.lower() == 'k':
+                    if target_piece.islower() != fig.islower()  and target_piece.lower() == 'k':
                         return True
 
         return False
