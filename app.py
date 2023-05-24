@@ -66,15 +66,16 @@ class Chess:
         i = 0
         for letter in fen_string:
             i+=1
-            if letter.lower() in 'rnbqkp':
-                self.board[8-current_row][8-current_col] = letter
-                current_col += 1
-            elif letter == '/':
+            if letter == '/':
                 current_row += 1
                 current_col = 0
+            elif letter.lower() in 'rnbqkp':
+                print(current_row, current_col, letter)
+                self.board[current_row][current_col] = letter.swapcase()
+                current_col += 1
             elif letter.isdigit():
                 for j in range(int(letter)):
-                    self.board[8-current_row][8-current_col] = '.'
+                    self.board[current_row][current_col] = '.'
                     current_col += 1
             if current_row >= 7 and current_col >= 8:
                 break
@@ -84,6 +85,13 @@ class Chess:
         self.white_turn = side == 'w'
         self.black_castle = ['q' in castling, 'k' in castling]
         self.white_castle = ['Q' in castling, 'K' in castling]
+        if en_passant_target != '-':
+            col = ord(en_passant_target[0]) - ord('a')
+            row = int(en_passant_target[1])
+            if self.player == 'w':
+                self.last_move = (col, row+1, col, row-1, 'p')
+            elif self.player == 'b':
+                self.last_move = (col, row-1, col, row+1, 'P')
     def main(self):
         """Main logic"""
         self.print_board(self.board)
