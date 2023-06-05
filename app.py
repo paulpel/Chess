@@ -22,8 +22,7 @@ class Chess:
 
         self.player = player
         self.white_turn = True
-        self.game_history = []
-        self.last_move = None  # (from_x, from_y, to_x, to_y , figure)
+        self.en_passant_target = None  # (to_x, to_y)
         self.black_castle = [True, True]  # (queen_side, king_side)
         self.white_castle = [True, True]
 
@@ -88,12 +87,7 @@ class Chess:
         if en_passant_target != '-':
             col = ord(en_passant_target[0]) - ord('a')
             row = 8 - int(en_passant_target[1])
-            print(col,row)
-            if self.player == 'w':
-                self.last_move = (col, row-1, col, row+1, 'p')
-            elif self.player == 'b':
-                self.last_move = (col, row+1, col, row-1, 'P')
-            print(self.last_move)
+            self.en_passant_target = (col, row)
     def main(self):
         """Main logic"""
         self.print_board(self.board)
@@ -111,6 +105,7 @@ class Chess:
             # random moves
             if len(filtered_moves) >= 1:
                 random_move = random.choice(filtered_moves)
+                self.en_passant_target = None
                 if isinstance(random_move[0], tuple):
                     for move in random_move:
                         self.move(move)
@@ -163,6 +158,8 @@ class Chess:
             fig = upgrade
         if fig.lower() == 'p' and self.board[to_row][to_col] == '.' and from_col != to_col: # if en passant
             self.board[from_row][to_col] = '.'
+        if fig.lower() == 'p' and abs(from_row-to_row) == 2:
+            self.en_passant_target = (from_col, from_row+to_row/2)
         self.board[to_row][to_col] = fig
         self.board[from_row][from_col] = "."
 
@@ -309,20 +306,11 @@ class Chess:
                     else:
                         moves.append((row, col, row + direction, col + dy))
 
-        # En passant (assuming the last move is stored as a tuple (from_x, from_y, to_x, to_y))
-        last_move = self.last_move
-        print('lm:', last_move, col)
-        if last_move:
-            from_col, from_row, to_col, to_row, fig_last = last_move
-            if (
-                fig_last.lower() == "p"
-                and abs(from_row - to_row) == 2
-                and from_col == to_col
-            ):
-                if col + 1 == to_col:
-                    moves.append((row, col, row + direction, col + 1))
-                elif col - 1 == to_col:
-                    moves.append((row, col, row + direction, col - 1))
+
+        if self.en_passant_target:
+            if row == self.en_passant_target[1] - direction \
+                    and (col == self.en_passant_target[0] + 1 or col == self.en_passant_target[0] - 1):
+                moves.append((row,col,self.en_passant_target[1], self.en_passant_target[0]))
         return moves
 
     def generate_rook_moves(self, row, col, fig):
