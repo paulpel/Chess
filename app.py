@@ -80,22 +80,24 @@ class Chess:
             if current_row >= 7 and current_col >= 8:
                 break
         side, castling, en_passant_target, _, _ = fen_string[i+1:].split()
-        print(side, castling, en_passant_target)
+        # print(side, castling, en_passant_target)
         self.player = side
         self.white_turn = side == 'w'
         self.black_castle = ['q' in castling, 'k' in castling]
         self.white_castle = ['Q' in castling, 'K' in castling]
         if en_passant_target != '-':
             col = ord(en_passant_target[0]) - ord('a')
-            row = int(en_passant_target[1])
+            row = 8 - int(en_passant_target[1])
+            print(col,row)
             if self.player == 'w':
-                self.last_move = (col, row+1, col, row-1, 'p')
+                self.last_move = (col, row-1, col, row+1, 'p')
             elif self.player == 'b':
-                self.last_move = (col, row-1, col, row+1, 'P')
+                self.last_move = (col, row+1, col, row-1, 'P')
+            print(self.last_move)
     def main(self):
         """Main logic"""
         self.print_board(self.board)
-        example_pos = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
+        example_pos = '7k/8/8/3pP3/8/8/8/7K w KQkq d6 0 1'
         self.read_position_from_fen(example_pos)
         self.print_board(self.board)
         while not self.close:
@@ -159,8 +161,11 @@ class Chess:
         fig = self.board[from_row][from_col]
         if upgrade:
             fig = upgrade
+        if fig.lower() == 'p' and self.board[to_row][to_col] == '.' and from_col != to_col: # if en passant
+            self.board[from_row][to_col] = '.'
         self.board[to_row][to_col] = fig
         self.board[from_row][from_col] = "."
+
         self.white_turn = not self.white_turn  # update turn
 
     def check_input(self, inp, start=True):
@@ -306,12 +311,13 @@ class Chess:
 
         # En passant (assuming the last move is stored as a tuple (from_x, from_y, to_x, to_y))
         last_move = self.last_move
+        print('lm:', last_move, col)
         if last_move:
-            from_row, from_col, to_row, to_col, fig_last = last_move
+            from_col, from_row, to_col, to_row, fig_last = last_move
             if (
                 fig_last.lower() == "p"
                 and abs(from_row - to_row) == 2
-                and row == to_row
+                and from_col == to_col
             ):
                 if col + 1 == to_col:
                     moves.append((row, col, row + direction, col + 1))
