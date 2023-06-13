@@ -1,5 +1,10 @@
 import copy
 import random
+import pygame
+import os
+import numpy as np
+import time
+import copy
 
 
 class Chess:
@@ -21,13 +26,45 @@ class Chess:
             self.board = self.board[::-1]
 
         self.player = player
-        self.white_turn = True
+        self.white_turn = False
         self.game_history = []
         self.last_move = None  # (from_x, from_y, to_x, to_y , figure)
         self.black_castle = [True, True]  # (queen_side, king_side)
         self.white_castle = [True, True]
 
         self.close = False
+
+        self.size = 800
+
+        self.assets = os.path.join(os.getcwd(), "Assets")
+        self.win = pygame.display.set_mode((self.size, self.size))
+        self.fill = (154, 140, 152)
+        self.fps = 60
+        pygame.display.set_caption("Chess")
+
+        pygame_icon = pygame.image.load(os.path.join(self.assets, "chess.png"))
+        pygame.display.set_icon(pygame_icon)
+
+        pygame.font.init()
+        font_size = int(self.size / 8)
+        self.my_font = pygame.font.SysFont("segoeuisymbol", font_size)
+        self.board_c = ((201, 173, 167), (74, 78, 105))
+        self.white = (255, 255, 255)
+        self.black = (0, 0, 0)
+        self.chrs = {
+            "p": self.my_font.render("\u265F", True, self.black),
+            "r": self.my_font.render("\u265C", True, self.black),
+            "n": self.my_font.render("\u265E", True, self.black),
+            "b": self.my_font.render("\u265D", True, self.black),
+            "k": self.my_font.render("\u265A", True, self.black),
+            "q": self.my_font.render("\u265B", True, self.black),
+            "P": self.my_font.render("\u2659", True, self.white),
+            "R": self.my_font.render("\u2656", True, self.white),
+            "N": self.my_font.render("\u2658", True, self.white),
+            "B": self.my_font.render("\u2657", True, self.white),
+            "K": self.my_font.render("\u2654", True, self.white),
+            "Q": self.my_font.render("\u2655", True, self.white),
+        }
 
     def print_board(self, board):
         """Function to print current board state"""
@@ -63,15 +100,12 @@ class Chess:
     def main(self):
         """Main logic"""
         self.print_board(self.board)
+        clock = pygame.time.Clock()
+        self.draw_board(self.board)
         while not self.close:
             possible = self.all_possible_moves()
             filtered_moves = self.filter_illegal_moves(possible)
             filtered_moves.extend(self.generate_castle_moves())
-            # append with castle moves if possible
-            # move = self.get_move()
-            # logic with player movement
-
-            # random moves
             if len(filtered_moves) >= 1:
                 random_move = random.choice(filtered_moves)
                 if isinstance(random_move[0], tuple):
@@ -83,7 +117,6 @@ class Chess:
                     else:
                         self.move(random_move)
                 self.update_castle()
-                input()
                 print("Possible moves(from_row, from_col, to_row, to_col):")
                 print('\n'.join([str(item) for item in filtered_moves]))
                 print("Random move choosen:", random_move)
@@ -92,6 +125,8 @@ class Chess:
             else:
                 print("Game over")
                 self.close = True
+            time.sleep(0.2)
+            self.draw_board(self.board)
 
     def get_move(self):
         """Get move from user
@@ -731,6 +766,36 @@ class Chess:
                 else:
                     self.black_castle[1] = False
 
+    def draw_board(self, highlight=None, available=None):
+        temp = copy.deepcopy(self.board)
+        temp = np.transpose(temp)
+        temp = np.flip(temp, axis=1)
+        self.win.fill(self.fill)
+        size_sqr = self.size / 8
+        for i in range(8):
+            for j in range(8):
+                if i % 2 == j % 2:
+                    pygame.draw.rect(
+                        self.win,
+                        self.board_c[1],
+                        (i * size_sqr, j * size_sqr, size_sqr, size_sqr),
+                    )
+                else:
+                    pygame.draw.rect(
+                        self.win,
+                        self.board_c[0],
+                        (i * size_sqr, j * size_sqr, size_sqr, size_sqr),
+                    )
+
+        for i in range(8):
+            for j in range(8):
+                if temp[i][j] != ".":
+                    self.t = self.win.blit(
+                        self.chrs[temp[i][j]],
+                        (i * size_sqr, j * size_sqr - size_sqr / 5),
+                    )
+
+        pygame.display.update()
 
 if __name__ == "__main__":
     chess_obj = Chess()
