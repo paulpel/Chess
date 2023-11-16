@@ -5,6 +5,7 @@ import random
 import io
 import numpy as np
 
+
 class ChessPositionRepresentation:
     def __init__(self, fen):
         # Initialize boards for each piece type
@@ -22,11 +23,32 @@ class ChessPositionRepresentation:
         self.black_queens = np.zeros((8, 8), dtype=int)
         self.black_king = np.zeros((8, 8), dtype=int)
 
+        self.en_passant = np.zeros((8,8), dtype = int)
+        self.castling_rights = np.zeros((8,8), dtype = int)
+
         self.set_positions(fen)
 
     def set_positions(self, fen):
         # Parse the FEN string and update the boards
         board = chess.Board(fen)
+        fen_parts = fen.split(' ')
+
+        # Reset the boards to 0
+        self.white_pawns.fill(0)
+        self.white_rooks.fill(0)
+        self.white_knights.fill(0)
+        self.white_bishops.fill(0)
+        self.white_queens.fill(0)
+        self.white_king.fill(0)
+        self.black_pawns.fill(0)
+        self.black_rooks.fill(0)
+        self.black_knights.fill(0)
+        self.black_bishops.fill(0)
+        self.black_queens.fill(0)
+        self.black_king.fill(0)
+        self.en_passant.fill(0)
+        self.castling_rights.fill(0)
+
         for square in chess.SQUARES:
             piece = board.piece_at(square)
             if piece:
@@ -59,6 +81,21 @@ class ChessPositionRepresentation:
                         self.black_queens[row, col] = 1
                     elif piece.piece_type == chess.KING:
                         self.black_king[row, col] = 1
+
+        if 'K' in fen_parts[2]:
+            self.castling_rights[7, 7] = 1  # White king-side
+        if 'Q' in fen_parts[2]:
+            self.castling_rights[7, 0] = 1  # White queen-side
+        if 'k' in fen_parts[2]:
+            self.castling_rights[0, 7] = 1  # Black king-side
+        if 'q' in fen_parts[2]:
+            self.castling_rights[0, 0] = 1  # Black queen-side
+
+        # Parse en passant square from FEN
+        if fen_parts[3] != '-':
+            ep_square = chess.parse_square(fen_parts[3])
+            ep_row, ep_col = divmod(ep_square, 8)
+            self.en_passant[ep_row, ep_col] = 1
 
 # class NNChessGameStateRepresentation:
     
@@ -97,7 +134,7 @@ positions = get_all_positions('chesstacion', 'white', 20)
 for idx, position in enumerate(positions):
     print(idx, position)
 
-# # Example usage
-# fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"  # Starting position
-# chess_position = ChessPositionRepresentation(fen)
-# print("White Pawns:\n", chess_position.white_pawns)
+# Example usage
+fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+chess_position = ChessPositionRepresentation(fen)
+print(chess_position)
