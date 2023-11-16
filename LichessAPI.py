@@ -98,7 +98,7 @@ class ChessPositionRepresentation:
             ep_row, ep_col = divmod(ep_square, 8)
             self.en_passant[ep_row, ep_col] = 1
 
-    def get_channel_boards(self):
+    def to_tensor(self):
         # Stack the individual boards and convert to a PyTorch tensor
         all_boards = [
             self.white_pawns, self.white_rooks, self.white_knights, self.white_bishops, self.white_queens,
@@ -150,4 +150,6 @@ for idx, position in enumerate(positions):
 # Example usage
 fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 chess_position = ChessPositionRepresentation(fen)
-print(chess_position)
+tensor_representation = chess_position.to_tensor()
+
+print(tensor_representation.shape)  # Should print: torch.Size([14, 8, 8])
