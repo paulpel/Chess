@@ -1,10 +1,5 @@
 import copy
 import random
-import pygame
-import os
-import numpy as np
-import time
-import copy
 
 
 class Chess:
@@ -26,45 +21,12 @@ class Chess:
             self.board = self.board[::-1]
 
         self.player = player
-        self.white_turn = False
-        self.game_history = []
-        self.last_move = None  # (from_x, from_y, to_x, to_y , figure)
+        self.white_turn = True
+        self.en_passant_target = None  # (to_x, to_y)
         self.black_castle = [True, True]  # (queen_side, king_side)
         self.white_castle = [True, True]
 
         self.close = False
-
-        self.size = 800
-
-        self.assets = os.path.join(os.getcwd(), "Assets")
-        self.win = pygame.display.set_mode((self.size, self.size))
-        self.fill = (154, 140, 152)
-        self.fps = 60
-        pygame.display.set_caption("Chess")
-
-        pygame_icon = pygame.image.load(os.path.join(self.assets, "chess.png"))
-        pygame.display.set_icon(pygame_icon)
-
-        pygame.font.init()
-        font_size = int(self.size / 8)
-        self.my_font = pygame.font.SysFont("segoeuisymbol", font_size)
-        self.board_c = ((201, 173, 167), (74, 78, 105))
-        self.white = (255, 255, 255)
-        self.black = (0, 0, 0)
-        self.chrs = {
-            "p": self.my_font.render("\u265F", True, self.black),
-            "r": self.my_font.render("\u265C", True, self.black),
-            "n": self.my_font.render("\u265E", True, self.black),
-            "b": self.my_font.render("\u265D", True, self.black),
-            "k": self.my_font.render("\u265A", True, self.black),
-            "q": self.my_font.render("\u265B", True, self.black),
-            "P": self.my_font.render("\u2659", True, self.white),
-            "R": self.my_font.render("\u2656", True, self.white),
-            "N": self.my_font.render("\u2658", True, self.white),
-            "B": self.my_font.render("\u2657", True, self.white),
-            "K": self.my_font.render("\u2654", True, self.white),
-            "Q": self.my_font.render("\u2655", True, self.white),
-        }
 
     def print_board(self, board):
         """Function to print current board state"""
@@ -97,17 +59,53 @@ class Chess:
             count += 1
         print('\n')
 
+    def read_position_from_fen(self, fen_string):
+        current_row = 0
+        current_col = 0
+        i = 0
+        for letter in fen_string:
+            i+=1
+            if letter == '/':
+                current_row += 1
+                current_col = 0
+            elif letter.lower() in 'rnbqkp':
+                print(current_row, current_col, letter)
+                self.board[current_row][current_col] = letter.swapcase()
+                current_col += 1
+            elif letter.isdigit():
+                for j in range(int(letter)):
+                    self.board[current_row][current_col] = '.'
+                    current_col += 1
+            if current_row >= 7 and current_col >= 8:
+                break
+        side, castling, en_passant_target, _, _ = fen_string[i+1:].split()
+        # print(side, castling, en_passant_target)
+        self.player = side
+        self.white_turn = side == 'w'
+        self.black_castle = ['q' in castling, 'k' in castling]
+        self.white_castle = ['Q' in castling, 'K' in castling]
+        if en_passant_target != '-':
+            col = ord(en_passant_target[0]) - ord('a')
+            row = 8 - int(en_passant_target[1])
+            self.en_passant_target = (col, row)
     def main(self):
         """Main logic"""
         self.print_board(self.board)
-        clock = pygame.time.Clock()
-        self.draw_board(self.board)
+        example_pos = '7k/8/8/3pP3/8/8/8/7K w KQkq d6 0 1'
+        self.read_position_from_fen(example_pos)
+        self.print_board(self.board)
         while not self.close:
             possible = self.all_possible_moves()
             filtered_moves = self.filter_illegal_moves(possible)
             filtered_moves.extend(self.generate_castle_moves())
+            # append with castle moves if possible
+            # move = self.get_move()
+            # logic with player movement
+
+            # random moves
             if len(filtered_moves) >= 1:
                 random_move = random.choice(filtered_moves)
+                self.en_passant_target = None
                 if isinstance(random_move[0], tuple):
                     for move in random_move:
                         self.move(move)
@@ -117,6 +115,7 @@ class Chess:
                     else:
                         self.move(random_move)
                 self.update_castle()
+                input()
                 print("Possible moves(from_row, from_col, to_row, to_col):")
                 print('\n'.join([str(item) for item in filtered_moves]))
                 print("Random move choosen:", random_move)
@@ -125,8 +124,6 @@ class Chess:
             else:
                 print("Game over")
                 self.close = True
-            time.sleep(0.2)
-            self.draw_board(self.board)
 
     def get_move(self):
         """Get move from user
@@ -159,8 +156,13 @@ class Chess:
         fig = self.board[from_row][from_col]
         if upgrade:
             fig = upgrade
+        if fig.lower() == 'p' and self.board[to_row][to_col] == '.' and from_col != to_col: # if en passant
+            self.board[from_row][to_col] = '.'
+        if fig.lower() == 'p' and abs(from_row-to_row) == 2:
+            self.en_passant_target = (from_col, from_row+to_row/2)
         self.board[to_row][to_col] = fig
         self.board[from_row][from_col] = "."
+
         self.white_turn = not self.white_turn  # update turn
 
     def check_input(self, inp, start=True):
@@ -262,7 +264,7 @@ class Chess:
         start_rank = 1 if self.player == "w" and fig.isupper() else 6
         promotion_rank = 7 if self.player == "w" and fig.isupper() else 0
         promotion_pieces = (
-            ["Q", "R", "B", "K"] if fig.isupper() else ["q", "r", "b", "k"]
+            ["Q", "R", "B", "N"] if fig.isupper() else ["q", "r", "b", "n"]
         )
 
         # Move forward
@@ -304,19 +306,11 @@ class Chess:
                     else:
                         moves.append((row, col, row + direction, col + dy))
 
-        # En passant (assuming the last move is stored as a tuple (from_x, from_y, to_x, to_y))
-        last_move = self.last_move
-        if last_move:
-            from_row, from_col, to_row, to_col, fig_last = last_move
-            if (
-                fig_last.lower() == "p"
-                and abs(from_row - to_row) == 2
-                and row == to_row
-            ):
-                if col + 1 == to_col:
-                    moves.append((row, col, row + direction, col + 1))
-                elif col - 1 == to_col:
-                    moves.append((row, col, row + direction, col - 1))
+
+        if self.en_passant_target:
+            if row == self.en_passant_target[1] - direction \
+                    and (col == self.en_passant_target[0] + 1 or col == self.en_passant_target[0] - 1):
+                moves.append((row,col,self.en_passant_target[1], self.en_passant_target[0]))
         return moves
 
     def generate_rook_moves(self, row, col, fig):
@@ -590,10 +584,10 @@ class Chess:
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
                     if target_piece != '.':
-                        if target_piece.islower() == fig.islower():
-                            break
-                        elif target_piece.lower() == 'r':
+                        if target_piece.lower() == 'q' and target_piece.islower() != fig.islower():
                             return True
+                        else:
+                            break
                     new_row += dr
                     new_col += dc
         if 'n' in remaining_enemy_type:
@@ -620,10 +614,10 @@ class Chess:
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
                     if target_piece != '.':
-                        if target_piece.islower() == fig.islower():
-                            break
-                        elif target_piece.lower() == 'b':
+                        if target_piece.lower() == 'b' and target_piece.islower() != fig.islower():
                             return True
+                        else:
+                            break
                     new_row += dr
                     new_col += dc
         if 'q' in remaining_enemy_type:
@@ -642,10 +636,10 @@ class Chess:
                 while 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
                     if target_piece != '.':
-                        if target_piece.islower() == fig.islower():
-                            break
-                        elif target_piece.lower() == 'q':
+                        if target_piece.lower() == 'q' and target_piece.islower() != fig.islower():
                             return True
+                        else :
+                            break
                     new_row += dr
                     new_col += dc
         if 'k' in remaining_enemy_type:
@@ -663,7 +657,7 @@ class Chess:
                 new_row, new_col = row_king + dr, col_king + dc
                 if 0 <= new_row < 8 and 0 <= new_col < 8:
                     target_piece = board[new_row][new_col]
-                    if target_piece.islower() != fig.islower() and target_piece.lower() == 'k':
+                    if target_piece.islower() != fig.islower()  and target_piece.lower() == 'k':
                         return True
 
         return False
@@ -766,36 +760,6 @@ class Chess:
                 else:
                     self.black_castle[1] = False
 
-    def draw_board(self, highlight=None, available=None):
-        temp = copy.deepcopy(self.board)
-        temp = np.transpose(temp)
-        temp = np.flip(temp, axis=1)
-        self.win.fill(self.fill)
-        size_sqr = self.size / 8
-        for i in range(8):
-            for j in range(8):
-                if i % 2 == j % 2:
-                    pygame.draw.rect(
-                        self.win,
-                        self.board_c[1],
-                        (i * size_sqr, j * size_sqr, size_sqr, size_sqr),
-                    )
-                else:
-                    pygame.draw.rect(
-                        self.win,
-                        self.board_c[0],
-                        (i * size_sqr, j * size_sqr, size_sqr, size_sqr),
-                    )
-
-        for i in range(8):
-            for j in range(8):
-                if temp[i][j] != ".":
-                    self.t = self.win.blit(
-                        self.chrs[temp[i][j]],
-                        (i * size_sqr, j * size_sqr - size_sqr / 5),
-                    )
-
-        pygame.display.update()
 
 if __name__ == "__main__":
     chess_obj = Chess()
