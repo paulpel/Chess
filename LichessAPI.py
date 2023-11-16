@@ -4,27 +4,28 @@ import chess.pgn
 import random
 import io
 import numpy as np
+import torch
 
 
 class ChessPositionRepresentation:
     def __init__(self, fen):
         # Initialize boards for each piece type
-        self.white_pawns = np.zeros((8, 8), dtype=int)
-        self.white_rooks = np.zeros((8, 8), dtype=int)
-        self.white_knights = np.zeros((8, 8), dtype=int)
-        self.white_bishops = np.zeros((8, 8), dtype=int)
-        self.white_queens = np.zeros((8, 8), dtype=int)
-        self.white_king = np.zeros((8, 8), dtype=int)
+        self.white_pawns = np.zeros((8, 8), dtype=bool)
+        self.white_rooks = np.zeros((8, 8), dtype=bool)
+        self.white_knights = np.zeros((8, 8), dtype=bool)
+        self.white_bishops = np.zeros((8, 8), dtype=bool)
+        self.white_queens = np.zeros((8, 8), dtype=bool)
+        self.white_king = np.zeros((8, 8), dtype=bool)
 
-        self.black_pawns = np.zeros((8, 8), dtype=int)
-        self.black_rooks = np.zeros((8, 8), dtype=int)
-        self.black_knights = np.zeros((8, 8), dtype=int)
-        self.black_bishops = np.zeros((8, 8), dtype=int)
-        self.black_queens = np.zeros((8, 8), dtype=int)
-        self.black_king = np.zeros((8, 8), dtype=int)
+        self.black_pawns = np.zeros((8, 8), dtype=bool)
+        self.black_rooks = np.zeros((8, 8), dtype=bool)
+        self.black_knights = np.zeros((8, 8), dtype=bool)
+        self.black_bishops = np.zeros((8, 8), dtype=bool)
+        self.black_queens = np.zeros((8, 8), dtype=bool)
+        self.black_king = np.zeros((8, 8), dtype=bool)
 
-        self.en_passant = np.zeros((8,8), dtype = int)
-        self.castling_rights = np.zeros((8,8), dtype = int)
+        self.en_passant = np.zeros((8,8), dtype=bool)
+        self.castling_rights = np.zeros((8,8), dtype=bool)
 
         self.set_positions(fen)
 
@@ -96,6 +97,18 @@ class ChessPositionRepresentation:
             ep_square = chess.parse_square(fen_parts[3])
             ep_row, ep_col = divmod(ep_square, 8)
             self.en_passant[ep_row, ep_col] = 1
+
+    def get_channel_boards(self):
+        # Stack the individual boards and convert to a PyTorch tensor
+        all_boards = [
+            self.white_pawns, self.white_rooks, self.white_knights, self.white_bishops, self.white_queens,
+            self.white_king,
+            self.black_pawns, self.black_rooks, self.black_knights, self.black_bishops, self.black_queens,
+            self.black_king,
+            self.en_passant, self.castling_rights
+        ]
+        stacked_boards = np.stack(all_boards, axis=0)
+        return torch.from_numpy(stacked_boards)
 
 # class NNChessGameStateRepresentation:
     
