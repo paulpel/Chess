@@ -1,5 +1,8 @@
 import copy
 import random
+import pygame
+import os
+import numpy as np
 
 
 class Chess:
@@ -26,129 +29,134 @@ class Chess:
         self.black_castle = [True, True]  # (queen_side, king_side)
         self.white_castle = [True, True]
 
-        self.close = False
+        self.run = True
 
-    def print_board(self, board):
-        """Function to print current board state"""
-        ascii_figures = {
-            "p": "\u265F",  # white
-            "r": "\u265C",
-            "n": "\u265E",
-            "b": "\u265D",
-            "q": "\u265B",
-            "k": "\u265A",
-            "P": "\u2659",  # black
-            "R": "\u2656",
-            "N": "\u2658",
-            "B": "\u2657",
-            "Q": "\u2655",
-            "K": "\u2654",
+        # GUI
+        self.size = 800
+
+        self.assets = os.path.join(os.getcwd(), "Assets")
+        self.win = pygame.display.set_mode((self.size, self.size))
+        self.fill = (154, 140, 152)
+        self.fps = 60
+        pygame.display.set_caption("Chess")
+
+        pygame_icon = pygame.image.load(os.path.join(self.assets, "chess.png"))
+        pygame.display.set_icon(pygame_icon)
+
+        pygame.font.init()
+        font_size = int(self.size / 8)
+        self.my_font = pygame.font.SysFont("segoeuisymbol", font_size)
+
+        self.white = (255, 255, 255)
+        self.black = (0, 0, 0)
+
+        self.board_color = ((201, 173, 167), (74, 78, 105))
+
+        self.chrs = {
+            "p": self.my_font.render("\u265F", True, self.black),
+            "r": self.my_font.render("\u265C", True, self.black),
+            "n": self.my_font.render("\u265E", True, self.black),
+            "b": self.my_font.render("\u265D", True, self.black),
+            "k": self.my_font.render("\u265A", True, self.black),
+            "q": self.my_font.render("\u265B", True, self.black),
+            "P": self.my_font.render("\u2659", True, self.white),
+            "R": self.my_font.render("\u2656", True, self.white),
+            "N": self.my_font.render("\u2658", True, self.white),
+            "B": self.my_font.render("\u2657", True, self.white),
+            "K": self.my_font.render("\u2654", True, self.white),
+            "Q": self.my_font.render("\u2655", True, self.white),
         }
-        ids = ["X"] + [str(i) for i in range(8)]
-        ids_row = " ".join(ids)
-        print('\n', ids_row)
-        count = 0
-        for row in board:
-            row_str = " ".join(
-                [
-                    ascii_figures[row[i]] if row[i] != "." else row[i]
-                    for i in range(len(row))
-                ]
-            )
-            print(str(count), row_str)
-            count += 1
-        print('\n')
 
-    def read_position_from_fen(self, fen_string):
-        current_row = 0
-        current_col = 0
-        i = 0
-        for letter in fen_string:
-            i+=1
-            if letter == '/':
-                current_row += 1
-                current_col = 0
-            elif letter.lower() in 'rnbqkp':
-                print(current_row, current_col, letter)
-                self.board[current_row][current_col] = letter.swapcase()
-                current_col += 1
-            elif letter.isdigit():
-                for j in range(int(letter)):
-                    self.board[current_row][current_col] = '.'
-                    current_col += 1
-            if current_row >= 7 and current_col >= 8:
-                break
-        side, castling, en_passant_target, _, _ = fen_string[i+1:].split()
-        # print(side, castling, en_passant_target)
-        self.player = side
-        self.white_turn = side == 'w'
-        self.black_castle = ['q' in castling, 'k' in castling]
-        self.white_castle = ['Q' in castling, 'K' in castling]
-        if en_passant_target != '-':
-            col = ord(en_passant_target[0]) - ord('a')
-            row = 8 - int(en_passant_target[1])
-            self.en_passant_target = (col, row)
+        self.selected_piece = None
+        self.filtered_moves = None
+        self.figure_possible = None
+
+
     def main(self):
         """Main logic"""
-        self.print_board(self.board)
-        example_pos = '7k/8/8/3pP3/8/8/8/7K w KQkq d6 0 1'
-        self.read_position_from_fen(example_pos)
-        self.print_board(self.board)
-        while not self.close:
-            possible = self.all_possible_moves()
-            filtered_moves = self.filter_illegal_moves(possible)
-            filtered_moves.extend(self.generate_castle_moves())
-            # append with castle moves if possible
-            # move = self.get_move()
-            # logic with player movement
-
-            # random moves
-            if len(filtered_moves) >= 1:
-                random_move = random.choice(filtered_moves)
-                self.en_passant_target = None
-                if isinstance(random_move[0], tuple):
-                    for move in random_move:
-                        self.move(move)
-                else:
-                    if isinstance(random_move[-1], str):
-                        self.move(random_move, random_move[-1])
+        clock = pygame.time.Clock()
+        while self.run:
+            clock.tick(self.fps)
+            for event in pygame.event.get():
+                possible = self.all_possible_moves()
+                self.filtered_moves = self.filter_illegal_moves(possible)
+                self.filtered_moves.extend(self.generate_castle_moves())
+                print(self.filtered_moves)
+                if event.type == pygame.QUIT:
+                    run = False
+                if event.type == pygame.MOUSEBUTTONUP:
+                    x, y = pygame.mouse.get_pos()
+                    click_row, click_col = int(y / (self.size / 8)), int(x / (self.size / 8))
+                    if self.selected_piece:
+                        new_pos = (click_row, click_col)
+                        move = (self.selected_piece[0], self.selected_piece[1], new_pos[0], new_pos[1])
+                        if move in self.filtered_moves:
+                            self.move(move)
+                            self.selected_piece = None
+                            self.filtered_moves = []
+                        else:
+                            self.selected_piece = None
+                            self.filtered_moves = []
                     else:
-                        self.move(random_move)
-                self.update_castle()
-                input()
-                print("Possible moves(from_row, from_col, to_row, to_col):")
-                print('\n'.join([str(item) for item in filtered_moves]))
-                print("Random move choosen:", random_move)
-                print("\nWhite turn!" if self.white_turn else "\nBlack turn!")
-                self.print_board(self.board)
-            else:
-                print("Game over")
-                self.close = True
+                        # No piece was selected, select the piece and filter moves for that piece
+                        self.selected_piece = (click_row, click_col)
+                        self.figure = self.board[self.selected_piece[0]][self.selected_piece[1]]
 
-    def get_move(self):
-        """Get move from user
 
-        :return: (row_from, col_from, row_to, col_to, figure)
-        :rtype: tuple
-        """
-        while True:
-            start = [i for i in input("Choose starting row and col (XY): ")]
-            if self.check_input(start):
-                row_start, col_start = int(start[0]), int(start[1])
-                break
+                        if self.figure != ".":
+                            self.figure_possible = [move for move in self.filtered_moves if move[:2] == self.selected_piece]
 
-        while True:
-            end = [i for i in input("Choose destination row and col (XY): ")]
-            if self.check_input(end, False):
-                row_end, col_end = int(end[0]), int(end[1])
-                break
-        return (
-            row_start,
-            col_start,
-            row_end,
-            col_end,
-            self.board[row_start][col_start],
-        )
+                        else:
+                            self.selected_piece = None
+   
+            self.draw_board(highlight=self.selected_piece, available=self.figure_possible)
+
+        pygame.quit()
+
+    
+    def draw_board(self, highlight=None, available=None):
+        self.win.fill(self.fill)
+        size_sqr = self.size / 8
+
+        # Draw the squares on the board
+        for i in range(8):
+            for j in range(8):
+                if (i + j) % 2 == 0:
+                    color = self.board_color[0]
+                else:
+                    color = self.board_color[1]
+                pygame.draw.rect(
+                    self.win,
+                    color,
+                    (j * size_sqr, i * size_sqr, size_sqr, size_sqr),
+                )
+
+        # Highlight the selected square and available moves
+        s = pygame.Surface((size_sqr, size_sqr))
+        s.fill((80, 200, 120))  # The highlight color
+        if highlight:
+            s.set_alpha(100)  # Semi-transparent for the selected square
+            self.win.blit(s, (highlight[1] * size_sqr, highlight[0] * size_sqr))
+
+        if available:
+            s.set_alpha(50)  # More transparent for available moves
+            for move in available:
+                self.win.blit(s, (move[1] * size_sqr, move[0] * size_sqr))
+
+        # Draw the pieces on the board
+        for i in range(8):
+            for j in range(8):
+                piece = self.board[i][j]
+                if piece != ".":
+                    self.win.blit(
+                        self.chrs[piece],
+                        (j * size_sqr, i * size_sqr - size_sqr / 5),
+                    )
+
+        pygame.display.update()
+
+
+
 
     def move(self, move, upgrade=False):
         from_row, to_row = move[0], move[2]
